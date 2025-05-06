@@ -1,0 +1,359 @@
+---
+title: "A Data-Driven Approach to Thyroid Cancer Recurrence Prediction"
+author: "Nicole Rodriguez"
+date: '05/06/25'
+output:
+  html_document:
+    code_folding: hide
+    fig_caption: true
+    df_print: kable
+    theme: lumen
+    toc: true
+    toc_float:
+      collapsed: false
+  pdf_document:
+    toc: true
+---
+
+# Introduction
+This project explores patterns and predictors of thyroid cancer recurrence in patients treated with Radioactive Iodine (RAI) therapy. The data used within this analysis is from [Kaggle](https://www.kaggle.com/datasets/aneevinay/thyroid-cancer-recurrence-dataset). By analyzing demographic, pathological, and clinical variables, the goal is to better understand which factors are most strongly associated with recurrence and how treatment responses vary across different patient groups.
+
+Findings show that recurrence is most common in papillary carcinoma—especially among males—and in patients aged 31–50. Stage I is the most frequent stage, often associated with an excellent treatment response, while treatment response shows the strongest correlation with recurrence.
+
+Understanding these patterns is crucial for improving risk prediction and tailoring treatment strategies to reduce recurrence and enhance long-term outcomes for thyroid cancer patients.
+
+* * *
+
+# Data
+## Load Libraries and Packages
+```{r, message=FALSE, warning=FALSE}
+# Load Required Libraries
+if (!require("mosaic"))
+  install.packages("mosaic")
+if (!require("tidyverse"))
+  install.packages("tidyverse")
+if (!require("ggplot2"))
+  install.packages("ggplot2")
+if (!require("plotly"))
+  install.packages("plotly")
+
+library(mosaic) # Stats analysis
+library(tidyverse) # Data manipulation & visualization
+library(ggplot2) # Tidyverse data visualization package
+library(plotly) # Interactive plots
+```
+
+## Description of data
+
+This dataset from [Kaggle](https://www.kaggle.com/datasets/aneevinay/thyroid-cancer-recurrence-dataset) focuses on patients with thyroid cancer recurrence after receiving Radioactive Iodine (RAI) therapy. This data is important due to it's capability to predict cancer recurrence in patients, understanding factors that increase the risk of these diagnoses, and exploring different treatment outcomes. 
+
+## Load and Clean Data
+```{r, message=FALSE, warning=FALSE}
+# Load Data into R
+thyroid_data <- read_csv("filtered_thyroid_data.csv")
+
+# Check & remove missing values 
+sum(is.na(thyroid_data))
+sum(is.null(thyroid_data))
+
+# View the type of data
+glimpse(thyroid_data)
+
+# Update variables to the appropriate data type
+thyroid_data$Gender <- as.factor(thyroid_data$Gender)
+thyroid_data$`Hx Radiothreapy` <- as.factor(thyroid_data$`Hx Radiothreapy`)
+thyroid_data$Adenopathy <- as.factor(thyroid_data$Adenopathy)
+thyroid_data$Pathology <- as.factor(thyroid_data$Pathology)
+thyroid_data$Focality <- as.factor(thyroid_data$Focality)
+thyroid_data$Risk <- factor(thyroid_data$Risk, levels = c("Low", "Intermediate", "High"), ordered = TRUE)
+thyroid_data$T <- as.factor(thyroid_data$T)
+thyroid_data$N <- as.factor(thyroid_data$N)
+thyroid_data$M <- as.factor(thyroid_data$M)
+thyroid_data$Stage <- factor(thyroid_data$Stage, levels = c("I", "II", "III", "IV"), ordered = TRUE)
+thyroid_data$Response <- as.factor(thyroid_data$Response)
+thyroid_data$Recurred <- as.factor(thyroid_data$Recurred)
+```
+> When assessing the correlation of recurrence with all variables in this dataset, it's important to have the variables in the proper data type for data analysis.  
+
+
+## Preview Data
+```{r, message=FALSE, warning=FALSE}
+# View updated data types
+glimpse(thyroid_data)
+
+# Top ten rows of the data
+head(thyroid_data, 10)
+```
+
+## Variables
+This [Kaggle](https://www.kaggle.com/datasets/aneevinay/thyroid-cancer-recurrence-dataset) dataset has a total of 383 patient records with the following 13 variables:
+
+- Age: Patient age (years)
+
+- Gender: Patients gender 
+  - Male or Female
+
+- Hx Radiotherapy : History of prior radiotherapy
+  - Yes or No
+
+- Adenopathy : Presence of lymph node involvement 
+  - Yes or No
+
+- Pathology : Type of thyroid cancer
+  - Micropapillary
+  - Papillary      
+  - Follicular     
+  - Hurthel cell
+
+- Focality : Tumor focality
+  - Uni-Focal
+  - Multi-Focal
+  
+- Risk : Cancer risk classification 
+  - Low
+  - Intermediate
+  - High
+
+- T : Tumor classification 
+  - T1a 
+  - T1b 
+  - T2 
+  - T3a 
+  - T3b 
+  - T4a 
+  - T4b
+
+- N : Lymph node classification 
+  - N0
+  - N1a
+  - N1b
+  
+- M : Metastasis classification 
+  - M0
+  - M1
+
+- Stage : Cancer staging 
+  - Stage I
+  - Stage II
+  - Stage III
+  - Stage IV
+  
+- Response : Treatment response (Excellent, Indeterminate, etc.).
+  - Intermediate
+  - Excellent
+  - Structural Incomplete
+  - Biochemical Incomplete
+  
+- Recurred : Whether cancer recurred 
+  - Yes or No
+
+* * *
+
+# Data Analysis 
+## Correlation Analysis
+```{r, message=FALSE, warning=FALSE}
+# Risk vs Hx Radiothreapy
+cor.test(as.numeric(thyroid_data$Risk), as.numeric(thyroid_data$`Hx Radiothreapy`),  method = "spearman")
+
+# Risk vs Adenopathy
+cor.test(as.numeric(thyroid_data$Risk), as.numeric(thyroid_data$Adenopathy),  method = "spearman")
+
+# Stage vs Recurred
+cor.test(as.numeric(thyroid_data$Stage), as.numeric(thyroid_data$Recurred), method = "spearman")
+
+# Response vs Recurred
+cor.test(as.numeric(thyroid_data$Response), as.numeric(thyroid_data$Recurred), method = "spearman")
+
+# Pathology vs Recurred
+cor.test(as.numeric(thyroid_data$Pathology), as.numeric(thyroid_data$Recurred), method = "spearman")
+
+# Tumor vs Recurred
+cor.test(as.numeric(thyroid_data$T), as.numeric(thyroid_data$Recurred), method = "spearman")
+
+# Lymph node vs Recurred
+cor.test(as.numeric(thyroid_data$N), as.numeric(thyroid_data$Recurred), method = "spearman")
+
+# Metastasis vs Recurred
+cor.test(as.numeric(thyroid_data$M), as.numeric(thyroid_data$Recurred), method = "spearman")
+
+# Focality vs Recurred
+cor.test(as.numeric(thyroid_data$Focality), as.numeric(thyroid_data$Recurred), method = "spearman")
+
+# Gender vs Recurred
+cor.test(as.numeric(thyroid_data$Gender), as.numeric(thyroid_data$Recurred), method = "spearman")
+
+# Stage vs Response
+cor.test(as.numeric(thyroid_data$Stage), as.numeric(thyroid_data$Response), method = "spearman")
+
+```
+
+To obtain the correlation between variables in this dataset, **Spearman** was used because it correctly ranks values ratther than using absolute magnitudes and is best for ordinal and non-parametric data. 
+
+- Correlation between **Risk** and other variables:
+ - Hx Radiotherapy: weak
+ - Adenopathy: weak
+
+- Correlation between **Recurred** and other variables: 
+  - **Strong Correlation**
+    - Response
+    - N
+  - **Moderate Correlation**
+    - Stage
+    - T
+    - M
+    - Focality
+    - Gender
+  - **Weak Correlation**
+    - Pathology
+    
+> The strongest predictors of recurrence by Spearman's rho: response, N stage, T stage, and focality
+
+## Chart/Graph 
+### Heatmap
+```{r, message=FALSE, warning=FALSE}
+# Create a data frame of correlation results
+cor_data <- data.frame(
+  Variable = c("Gender", "Stage", "Response", "Pathology", 
+               "T", "N", "M", "Focality"),
+  Rho = c(0.328, 0.417, 0.662, 0.088, 0.537, 0.630, 
+          0.354, -0.384)
+)
+
+# Order variables by strength of correlation
+cor_data$Variable <- factor(cor_data$Variable, 
+                            levels = cor_data$Variable[order(cor_data$Rho)])
+
+# Heatmap
+ggplot(cor_data, aes(x = "Recurred", y = Variable, fill = Rho)) +
+  geom_tile(color = "white") +
+  # Text
+  geom_text(aes(label = round(Rho, 3)), color = "black") +
+  # Color
+  scale_fill_gradient2(low = "lightgreen", 
+                       mid = "orange", high = "red", midpoint = 0) +
+  # Labels
+  labs(title = "Spearman Correlation with Recurred", x = "", y = "") +
+  # Theme
+  theme_minimal()
+```
+
+This heatmap reveals the strength of correlation that the variables have with recurrence. The variable with the highest correlation to recurrence is response, while focality has the least. This is important because it highlights how treatment response contributes to thyroid cancer coming back in these patients. Being able to find ways to maximize the effectiveness and response to these treatments is crucial for the long-term health of patients. 
+
+```{r, message=FALSE, warning=FALSE}
+# Age Groups
+thyroid_data$Age_Group <- cut(thyroid_data$Age, breaks = c(0, 30, 50, 70, 100), 
+                              labels = c("0–30", "31–50", "51–70", "71+"), right = FALSE)
+
+# Recurrence per age group
+age_recurr <- as.data.frame(table(thyroid_data$Age_Group, thyroid_data$Recurred))
+colnames(age_recurr) <- c("AgeGroup", "Recurred", "Count")
+
+# Interactive plot
+plot_ly(age_recurr, x = ~AgeGroup, y = ~Count, color = ~Recurred, type = 'bar') %>%
+  layout(barmode = 'group', title = "Recurrence by Age Group",
+         xaxis = list(title = "Age Group"),
+         yaxis = list(title = "Count"))
+```
+
+
+In the interactive bar plot above, the 31–50 age group shows the highest number of recurrence cases compared to other age groups. This group also has the highest overall patient count, including those who did not experience a recurrence. The second highest number of recurrence cases is observed in the 51–70 age group.
+
+```{r, message=FALSE, warning=FALSE}
+# Create a data frame of stage & response
+stage_response <- as.data.frame(table(thyroid_data$Stage, thyroid_data$Response))
+colnames(stage_response) <- c("Stage", "Response", "Count")
+
+# Interactive plot
+plot_ly(stage_response, x = ~Stage, y = ~Count, color = ~Response, type = 'bar') %>%
+  layout(barmode = 'group', title = "Treatment Response by Stage",
+         xaxis = list(title = "Stage"),
+         yaxis = list(title = "Count"))
+```
+
+
+The interactive bar plot reveals that Stage I had the highest overall case count and dominated across all treatment response categories. Among these, the most frequent response was excellent, followed by structural incomplete and indeterminate responses.
+
+
+```{r, message=FALSE, warning=FALSE}
+# ggplot gender vs pathology by recurrence 
+ggplot(thyroid_data, aes(x = Gender, fill = Recurred)) +
+  # bar plot
+  geom_bar(position = "dodge") +
+  facet_wrap(~ Pathology) +
+  # Labels
+  labs(
+    title = "Gender vs. Pathology (Colored by Recurrence)",
+    x = "Gender",
+    y = "Patient Count",
+    fill = "Recurred"
+  ) +
+  # Theme 
+  theme_minimal()
+  
+```
+
+This bar plot breaks down gender distribution across different thyroid cancer pathologies, with recurrence status represented by color.
+
+- Papillary carcinoma is the most common type, especially among females, who show a high number of both recurrence and non-recurrence cases.
+
+- For Micropapillary and Follicular types, recurrence is relatively low, with females again being more affected than males.
+
+- Hurthle cell cases are rare but appear in both genders, with recurrence present in a small number of cases.
+
+> Overall, female patients dominate across all pathology types, and recurrence is most notable in Papillary carcinoma for both genders, but especially in males.
+
+```{r, message=FALSE, warning=FALSE}
+# ggplot stage vs recurred
+ggplot(thyroid_data, aes(x = Stage, fill = Recurred)) +
+  geom_bar(position = "fill") +
+  facet_wrap(~ Response) +
+  # Labels 
+  labs(title = "Stage vs Response, Colored by Recurrence", y = "Proportion")
+```
+
+This bar plot illustrates the distribution of cancer stages and treatment responses, with recurrence status indicated by color. Notably, patients with a structural incomplete response almost always experienced a recurrence of thyroid cancer, whereas those with an excellent response rarely had recurrences. Among Stage II cases, biochemical incomplete responses were associated with more recurrences compared to indeterminate responses. Additionally, for indeterminate responses, Stage I had more cases without recurrence than Stage II.
+
+
+```{r, message=FALSE, warning=FALSE}
+# ggplot lymph nodes vs risk 
+ggplot(thyroid_data, aes(x = N, fill = Risk)) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ Recurred) +
+  # Labels 
+  labs(
+    title = "Lymph Node Classification (N) vs Recurrence, Colored by Risk",
+    x = "Lymph Node Classification (N)",
+    y = "Patient Count",
+    fill = "Risk Level"
+  ) +
+  # Theme
+  theme_minimal() 
+```
+
+The bar plot above shows the relationship between lymph node classification and recurrence, with risk levels indicated by color. Patients classified as N0 exhibited low risk in both recurrence and non-recurrence groups. N1b had the highest number of recurrences, particularly among intermediate and high-risk categories. In the no recurrence group, only low and intermediate risk levels were observed, while the recurrence group included all three risk levels. For N1a cases with recurrence, only intermediate and high-risk levels were present, with intermediate being the most common.
+
+## Summary Statistics
+```{r, message=FALSE, warning=FALSE}
+# Summary statistics with favstats()
+favstats(~ Gender, data = thyroid_data)
+favstats(~ Adenopathy, data = thyroid_data)
+favstats(~ Pathology, data = thyroid_data)
+favstats(~ Risk, data = thyroid_data)
+favstats(~ T, data = thyroid_data)
+favstats(~ N, data = thyroid_data)
+favstats(~ M, data = thyroid_data)
+favstats(~ Response, data = thyroid_data)
+favstats(~ Recurred, data = thyroid_data)
+favstats(~ Stage, data = thyroid_data)
+```
+
+* * *
+
+# Tableau Story
+
+<div class='tableauPlaceholder' id='viz1746053824529' style='position: relative'><noscript><a href='#'><img alt='Thyroid Cancer Analysis ' src='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Th&#47;ThyroidCancerStatisticalAnalysis&#47;Story1&#47;1_rss.png' style='border: none' /></a></noscript><object class='tableauViz'  style='display:none;'><param name='host_url' value='https%3A%2F%2Fpublic.tableau.com%2F' /> <param name='embed_code_version' value='3' /> <param name='site_root' value='' /><param name='name' value='ThyroidCancerStatisticalAnalysis&#47;Story1' /><param name='tabs' value='no' /><param name='toolbar' value='yes' /><param name='static_image' value='https:&#47;&#47;public.tableau.com&#47;static&#47;images&#47;Th&#47;ThyroidCancerStatisticalAnalysis&#47;Story1&#47;1.png' /> <param name='animate_transition' value='yes' /><param name='display_static_image' value='yes' /><param name='display_spinner' value='yes' /><param name='display_overlay' value='yes' /><param name='display_count' value='yes' /><param name='language' value='en-US' /></object></div>                
+
+```{js, embedcode, echo= FALSE}
+var divElement = document.getElementById('viz1746053824529');                    var vizElement = divElement.getElementsByTagName('object')[0];                    vizElement.style.width='1016px';vizElement.style.height='991px';                    var scriptElement = document.createElement('script');                    scriptElement.src = 'https://public.tableau.com/javascripts/api/viz_v1.js';                    vizElement.parentNode.insertBefore(scriptElement, vizElement);
+```
+
