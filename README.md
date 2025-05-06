@@ -18,9 +18,10 @@ By identifying which factors are most strongly linked to recurrence, clinicians 
 
 ## Data
 [Kaggle](https://www.kaggle.com/datasets/aneevinay/thyroid-cancer-recurrence-dataset?select=filtered_thyroid_data.csv)
-Dataset: Thyroid Cancer Recurrence Dataset
-Files: 
--	filtered_thyroid_data.csv
+- Dataset: Thyroid Cancer Recurrence Dataset
+
+- Files: 
+  -	filtered_thyroid_data.csv
 
 ## Required Packages
 -	mosaic: Stats analysis
